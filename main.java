@@ -1,208 +1,189 @@
-//without generic
+ // 666//
+import pandas as pd 
+import matplotlib.pyplot as plt 
+from sklearn.linear_model import LinearRegression 
+from sklearn.model_selection import train_test_split 
+from sklearn.metrics import mean_squared_error, r2_score 
+import seaborn as sns 
+df = pd.read_csv("student_scores.csv") 
+X = df[["Hours"]] 
+y = df["Marks"] 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42) 
+model = LinearRegression() 
+model.fit(X_train, y_train) 
+print("Intercept (a): ", model.intercept_) 
+print("Slope (b): ", model.coef_) 
+y_pred = model.predict(X_test) 
+print("Mean Squared Error: ", mean_squared_error(y_test, y_pred)) 
+print("R² Score: ", r2_score(y_test, y_pred)) 
+plt.scatter(X, y, color="blue") 
+plt.plot(X, model.predict(X), color="red") 
+plt.xlabel("Hours of Study") 
+plt.ylabel("Marks") 
+plt.title("Simple Linear Regression") 
+plt.show() 
 
-import java.util.ArrayList;
-public class main{
-    public static void main(String[] args){
-        ArrayList list = new ArrayList();
-        list.add("Hello");
-        list.add(124);
-        list.add(34);
-        String str = (String) list.get(0);
-        String str1 = (String) list.get(1);
-    }
-}
--------------------------------------------------------------------------
-With Generics 
- import java.util.ArrayList;  
- public class Main {  
- public static void main(String[] args) {  
-ArrayList<String> list = new ArrayList<>(); 
-list.add("Hello");
-list.add("World");
- String s = list.get(0); 
- String s1 = list.get(1);      } } 
+//77//
 
----------------------------------------------------------------------------------------------------------------
-string,int,float,double
+import pandas as pd 
+from sklearn.linear_model import LogisticRegression 
+from sklearn.tree import DecisionTreeClassifier, plot_tree 
+from sklearn.metrics import classification_report 
+import matplotlib.pyplot as plt 
+data = { 
+"Hours_Studied": [5,3,8,2,6,1,7,4,9,2], 
+"Attendance": [80,60,90,40,85,35,88,65,92,50], 
+"Pass": [1,0,1,0,1,0,1,0,1,0] 
+} 
+df = pd.DataFrame(data) 
+df.to_csv("student_performance.csv", index=False) 
+print(df) 
+X = df[["Hours_Studied", "Attendance"]] 
+y = df["Pass"] 
+log_reg = LogisticRegression() 
+log_reg.fit(X, y) 
+y_pred_log = log_reg.predict(X) 
+print("Logistic Regression Classification Report: ") 
+print(classification_report(y, y_pred_log)) 
+tree_clf = DecisionTreeClassifier(max_depth=3, random_state=42) 
+tree_clf.fit(X, y) 
+y_pred_tree = tree_clf.predict(X) 
+print("Decision Tree Classification Report: ") 
+print(classification_report(y, y_pred_tree)) 
+plt.figure(figsize=(8,6)) 
+plot_tree(tree_clf, feature_names=["Hours_Studied", "Attendance"], class_names=["Fail", 
+"Pass"], filled=True)
+plt.show()
 
-public class Box<T> {
- private T value;     
- 
-  public void setValue(T value) {  
-   this.value = value;     
-   }
-   public T getValue() { 
-    return value;     
-    }  
-    java public class pract1_3 {
-     public static void main(String[] args) { 
-     Box<Integer> box = new Box<>();       
-    box.setValue(15);         
-    Integer i = box.getValue(); // no cast needed  
-    // System.out.println(i);     } } 
----------------------------------------------------------------------------------
-    one or more parameter
+/8/
 
-    class Pair<K, V> {
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+from sklearn.cluster import KMeans 
+df = pd.read_csv("customers.csv") 
+print(df.head()) 
+X = df[['Annual_Income', 'Spending_Score']] 
+wcss = [] 
+for i in range(1, 11): 
+kmeans = KMeans(n_clusters=i, random_state=42) 
+kmeans.fit(X) 
+wcss.append(kmeans.inertia_) 
+plt.plot(range(1, 11), wcss, marker='o') 
+plt.title("Elbow Method") 
+plt.xlabel("Number of clusters") 
+plt.ylabel("WCSS") 
+plt.show()
 
-    private K key;
-    private V value;
+# Step 5: Fit K-Means with Optimal k
 
-    public Pair(K key, V value) {
-        this.key = key;
-        this.value = value;
-    }
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
 
-    public K getKey() {
-        return key;
-    }
+df['Cluster'] = kmeans.fit_predict(X)
 
-    public V getValue() {
-        return value;
-    }
-}
+print(df.head())
 
-public class Main {
 
-    public static void main(String[] args) {
+# Step 6: Visualize the Clusters
 
-        Pair<String, Integer> pair =
-            new Pair<>("Age", 30);
+plt.figure(figsize=(8, 6))
 
-        System.out.println("Key: " + pair.getKey());
-        System.out.println("Value: " + pair.getValue());
-    }
-}
+sns.scatterplot(
+    x='Annual_Income',
+    y='Spending_Score',
+    hue='Cluster',
+    data=df,
+    palette='Set1',
+    s=100
+)
 
-----------------------------------------------------------------------------------
- using  Lambda Expression with ArrayList
+plt.scatter(
+    kmeans.cluster_centers_[:, 0],
+    kmeans.cluster_centers_[:, 1],
+    s=300,
+    c='yellow',
+    marker='X',
+    label='Centroids'
+)
 
-import java.util.ArrayList;
+plt.title("Customer Segmentation using K-Means")
+plt.xlabel("Annual Income")
+plt.ylabel("Spending Score")
+plt.legend()
 
-public class Main {
-    public static void main(String[] args) {
+plt.show()
 
-        ArrayList<Integer> numbers = new ArrayList<Integer>();
+//9//
 
-        numbers.add(5);
-        numbers.add(9);
-        numbers.add(8);
-        numbers.add(1);
+import pandas as pd 
+import matplotlib.pyplot as plt 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.decomposition import PCA 
+df = pd.read_csv("iris_pca_data.csv") 
+print("Original Dataset:") 
+print(df) 
+X = df[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']] 
+scaler = StandardScaler() 
+X_scaled = scaler.fit_transform(X) 
+pca = PCA(n_components=2) 
+X_pca = pca.fit_transform(X_scaled) 
+pca_df = pd.DataFrame( 
+X_pca, 
+columns=['Principal_Component_1', 'Principal_Component_2'] 
+) 
+print("\nDataset After PCA:") 
+print(pca_df) 
+print("\nExplained Variance Ratio:") 
+print(pca.explained_variance_ratio_) 
+total_variance = sum(pca.explained_variance_ratio_) * 100 
+print("\nTotal Variance Retained:", round(total_variance, 2), "%") 
+plt.figure(figsize=(8, 5)) 
+plt.scatter( 
+X_pca[:, 0], 
+X_pca[:, 1], 
+color='blue', 
+marker='o' 
+) 
+plt.xlabel("Principal Component 1") 
+plt.ylabel("Principal Component 2") 
+plt.title("PCA - Dimensionality Reduction") 
+plt.grid(True) 
+plt.show()
 
-        numbers.forEach((n) -> {
-            System.out.println(n);
-        });
-    }
-}
-------------------------------------------------------------------------
-using lambda method
 
-interface StringFunction1 {
-    String run(String str);
-}
+//10//
 
-public class Main2 {
-
-    public static void main(String[] args) {
-
-        // Lambda expression to add !
-        StringFunction1 exclaim = (s) -> s + "!";
-
-        // Lambda expression to add ?
-        StringFunction1 ask = (s) -> s + "?";
-
-        // Calling method with exclaim lambda
-        printFormatted("Hello", exclaim);
-
-        // Calling method with ask lambda
-        printFormatted("Hello", ask);
-    }
-
-    // Method that accepts String and Lambda expression
-    public static void printFormatted(String str, StringFunction1 format) {
-
-        String result = format.run(str);
-
-        System.out.println(result);
-    }
-}
-
------------------------------------------------------------
- lambda with parameter 
-
-interface Add {
-    int add(int a, int b);
-}
-
-public class parameter {
-    public static void main(String[] args) {
-
-        Add addition = (a, b) -> a + b;
-
-        int result = addition.add(90, 22);
-
-        System.out.println("The result of 90 + 22 is: " + result);
-    }
-}
---------------------------------------------------------------------------------
-lambda string exampla
-
-@FunctionalInterface
-interface StringLength {
-    int getLength(String s);
-}
-
-public class StringLength1 {
-    public static void main(String[] args) {
-
-        StringLength lengthc = (s) -> s.length();
-
-        int length = lengthc.getLength("Urvashi Patel");
-
-        System.out.println("The length of the string is: " + length);
-    }
-}
---------------------------------------------------------------------
-lamdda to print each element
-
-import java.util.ArrayList;
-
-public class Element {
-    public static void main(String[] args) {
-
-        ArrayList<Integer> numbers = new ArrayList<>();
-
-        numbers.add(5);
-        numbers.add(9);
-        numbers.add(4);
-        numbers.add(3);
-        numbers.add(7);
-
-        for (Integer n : numbers) {
-            System.out.println(n);
-        }
-    }
-}
-------------------------------------------------------------------
-lamda format string
-interface StringFunction {
-    String run(String str);
-}
-
-public class formatstr {
-    public static void main(String[] args) {
-
-        StringFunction exclaim = (s) -> s + "!";
-        StringFunction ask = (s) -> s + "?";
-
-        printFormatted("Hello Ram", exclaim);
-        printFormatted("Hello Sita", ask);
-        printFormatted("Hello Laxman", exclaim);
-    }
-
-    public static void printFormatted(String str, StringFunction format) {
-        String result = format.run(str);
-        System.out.println(result);
-    }
-}
-
+import pandas as pd 
+import matplotlib.pyplot as plt 
+from sklearn.preprocessing import StandardScaler 
+from sklearn.decomposition import PCA 
+df = pd.read_csv("iris_pca_data.csv") 
+print("Original Dataset:") 
+print(df) 
+X = df[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']] 
+scaler = StandardScaler() 
+X_scaled = scaler.fit_transform(X) 
+pca = PCA(n_components=2) 
+X_pca = pca.fit_transform(X_scaled) 
+pca_df = pd.DataFrame( 
+X_pca, 
+columns=['Principal_Component_1', 'Principal_Component_2'] 
+) 
+print("\nDataset After PCA:") 
+print(pca_df) 
+print("\nExplained Variance Ratio:") 
+print(pca.explained_variance_ratio_) 
+total_variance = sum(pca.explained_variance_ratio_) * 100 
+print("\nTotal Variance Retained:", round(total_variance, 2), "%") 
+plt.figure(figsize=(8, 5)) 
+plt.scatter( 
+X_pca[:, 0], 
+X_pca[:, 1], 
+color='blue', 
+marker='o' 
+) 
+plt.xlabel("Principal Component 1") 
+plt.ylabel("Principal Component 2") 
+plt.title("PCA - Dimensionality Reduction") 
+plt.grid(True) 
+plt.show()
