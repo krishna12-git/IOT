@@ -1,556 +1,498 @@
-4a. Write a program that reads a numbers, uses a Map to 
-count the occurrences of each unique number, and then 
-prints the number counts. 
-Code: 
-  import java.util.*;
+6.A) Create a function that calculates the sum of a slice of numbers by dividing the slice into two parts, calculating the sum of each part in a separate goroutine, and then combining the results using channels. 
 
-public class Practical4a {
-    public static void main(String[] args) {
+package main
 
-        int a[] = {1, 13, 4, 1, 41, 31, 31, 4, 13, 2};
-        String b[] = {"Sakshi", "Dhanashree", "Snehal", "Urvashi"};
+import "fmt"
+
+func sumSlice(slice []int, c chan int) {
+	sum := 0
+
+	for _, v := range slice {
+		sum += v
+	}
+
+	c <- sum
+}
+
+func calculateConcurrentSum(numbers []int) int {
+	c := make(chan int)
+
+	mid := len(numbers) / 2
+
+	go sumSlice(numbers[:mid], c)
+	go sumSlice(numbers[mid:], c)
+
+	sum1 := <-c
+	sum2 := <-c
+
+	return sum1 + sum2
+}
+
+func main() {
+	numbers := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	fmt.Printf("Original slice: %v\n", numbers)
+
+	total := calculateConcurrentSum(numbers)
+
+	fmt.Printf("Concurrent sum: %d\n", total)
+}
 
 
-        ArrayList<Integer> al = new ArrayList<>();
+6.B)Write a Go program that finds prime numbers up to a given limit using multiple goroutines to speed up the process. Use channels to collect the prime numbers. Code : 
 
-        for (int i = 0; i < a.length; i++) {
-            al.add(a[i]);
-        }
+package main
 
-        
-        HashMap<Integer, Integer> hm = new HashMap<>();
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 
-        for (int i = 0; i < al.size(); i++) {
-            hm.putIfAbsent(al.get(i), Collections.frequency(al, al.get(i)));
-        }
+func isPrime(n int) bool {
+	if n < 2 {
+		return false
+	}
 
-        System.out.println(hm);
+	for i := 2; i*i <= n; i++ {
+		if n%i == 0 {
+			return false
+		}
+	}
 
-       
-        ArrayList<String> bl = new ArrayList<>();
+	return true
+}
 
-        for (int i = 0; i < b.length; i++) {
-            bl.add(b[i]);
-        }
+func findPrimes(start, end int, wg *sync.WaitGroup, ch chan<- int) {
+	defer wg.Done()
 
-        
-        HashMap<String, String> hm1 = new HashMap<>();
+	for i := start; i <= end; i++ {
+		if isPrime(i) {
+			ch <- i
+		}
+	}
+}
 
-        for (int i = 0; i < bl.size(); i++) {
-            hm1.putIfAbsent(bl.get(i),
-                    String.valueOf(Collections.frequency(bl, bl.get(i))));
-        }
+func main() {
+	var limit int
 
-        System.out.println(hm1);
+	fmt.Print("Enter upper limit: ")
+	fmt.Scan(&limit)
+
+	startTime := time.Now()
+
+	primes := make(chan int)
+	var wg sync.WaitGroup
+
+	workers := 4
+	step := (limit - 1) / workers
+
+	for i := 0; i < workers; i++ {
+		a := 2 + i*step
+		b := a + step - 1
+
+		if i == workers-1 {
+			b = limit
+		}
+
+		wg.Add(1)
+		go findPrimes(a, b, &wg, primes)
+	}
+
+	go func() {
+		wg.Wait()
+		close(primes)
+	}()
+
+	var results []int
+
+	for p := range primes {
+		results = append(results, p)
+	}
+
+	fmt.Printf("Found %d primes in %v:\n", len(results), time.Since(startTime))
+	fmt.Println(results)
+}
+
+7a)  server
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		http.NotFound(w, r)
+		return
+	}
+
+	fmt.Fprintf(w, "Hello, World!")
+}
+
+func main() {
+	http.HandleFunc("/", helloHandler)
+
+	port := ":8080"
+
+	log.Printf("Server starting on port %s\n", port)
+	log.Println("Access it at http://localhost:8080")
+
+	err := http.ListenAndServe(port, nil)
+
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
+8.A) Create a Go program that defines a struct representing a person (with name, age, and city). Encode an instance of this struct into JSON format and then decode a given JSON string back into the struct.
+		
+        package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+)
+
+type Person struct {
+	Name string `json:"name"`
+	Age  int    `json:"age"`
+	City string `json:"city"`
+}
+
+func main() {
+	personToEncode := Person{
+		Name: "Alice",
+		Age:  30,
+		City: "New York",
+	}
+
+	fmt.Println("--- Encoding Struct to JSON ---")
+	fmt.Printf("Original Struct: %+v\n", personToEncode)
+
+	jsonData, err := json.Marshal(personToEncode)
+
+	if err != nil {
+		log.Fatalf("Error marshalling to JSON: %s", err)
+	}
+
+	fmt.Printf("Encoded JSON (as byte slice): %v\n\n", jsonData)
+	fmt.Printf("Encoded JSON: %s\n", string(jsonData))
+
+	fmt.Println("\n--- Decoding JSON to Struct ---")
+
+	var personToDecode Person
+
+	err = json.Unmarshal(jsonData, &personToDecode)
+
+	if err != nil {
+		log.Fatalf("Error unmarshalling JSON: %s", err)
+	}
+
+	fmt.Printf("Decoded Struct: %+v\n", personToDecode)
+
+	fmt.Printf(
+		"Name: %s, Age: %d, City: %s\n",
+		personToDecode.Name,
+		personToDecode.Age,
+		personToDecode.City,
+	)
+}
+
+8.b)Create a Go program that reads a JSON file containing information about books (title, author, publication year) and prints the details of each book.
+Code :
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
+)
+
+type Book struct {
+	Title           string `json:"title"`
+	Author          string `json:"author"`
+	PublicationYear int    `json:"publication_year"`
+}
+
+func main() {
+	fileName := "books.json"
+
+	jsonData, err := ioutil.ReadFile(fileName)
+
+	if err != nil {
+		log.Fatalf("Error reading JSON file: %s", err)
+	}
+
+	var books []Book
+
+	err = json.Unmarshal(jsonData, &books)
+
+	if err != nil {
+		log.Fatalf("Error unmarshalling JSON data: %s", err)
+	}
+
+	fmt.Println("Successfully parsed book data:")
+
+	for i, book := range books {
+		fmt.Printf("\n--- Book %d ---\n", i+1)
+		fmt.Printf("Title: %s\n", book.Title)
+		fmt.Printf("Author: %s\n", book.Author)
+		fmt.Printf("Year: %d\n", book.PublicationYear)
+	}
+}
+books.json make a folder init
+
+[
+    {
+        "title": "The Go Programming Language",
+        "author": "Alan A. A. Donovan & Brian W. Kernighan",
+        "publication_year": 2015
+    },
+    {
+        "title": "The Fault in Our Stars",
+        "author": "John Green",
+        "publication_year": 2012
     }
+]
+
+9.A)Write a Go program that takes a directory and a search string as input and finds all files in that directory (and its subdirectories) that contain the search string. 
+Code :
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+func searchInFile(path string, query string) (bool, error) {
+	file, err := os.Open(path)
+
+	if err != nil {
+		return false, err
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), query) {
+			return true, nil
+		}
+	}
+
+	return false, scanner.Err()
 }
 
-4b. Write a program that reads a text file, uses a Map to 
-count the occurrences of each unique word, and then prints 
-the word counts. 
-Code: 
-import java.util.*; 
-public class HashMap1 { 
-public static void main(String[] args) { 
-HashMap<Integer, String> map = new HashMap<>(17,0.5f); 
-map.put(31, "Urvashi"); 
-map.put(11, "Snehal"); 
-map.put(2, "Sakshi"); 
-map.put(2, "Dhanu"); 
-map.put(2, "Sonu"); 
-System.out.println(map); 
-String student = map.get(31); 
-System.out.println(student); 
-String s = map.get(69); 
-System.out.println(s); 
-System.out.println(map.containsKey(2)); 
-System.out.println(map.containsValue("Sakshi")); 
-for (int i : map.keySet()) { 
-System.out.println(map.get(i)); 
-} 
-Set<Map.Entry<Integer, String>> entries = map.entrySet(); 
-for (Map.Entry<Integer, String> entry : entries) { 
-entry.setValue(entry.getValue().toUpperCase()); 
-} 
-System.out.println(map); 
-boolean res = map.remove(31, "Sonu"); 
-System.out.println("REMOVED ? :" + res); 
-System.out.println(map); 
-List<Integer> list = Arrays.asList(2, 4, 32, 43, 4, 432); 
-list.contains(32); 
-} 
-} 
+func main() {
+	searchDir := "./"
+	searchQuery := "TODO"
 
-4c. Write a program that reads a text and number, uses a 
-Map to count the occurrences of each unique word and 
-number, and then prints the counts.  
-Code: 
-import java.util.*; 
-public class Count { 
-public static void main(String[] args) { 
-Scanner sc = new Scanner(System.in); 
-// Input text from user 
-System.out.println("Enter a text (words and numbers):"); 
-String input = sc.nextLine(); 
-// Split input into tokens (words/numbers) 
-String[] tokens = input.split("\\s+"); 
-// Map to store word/number counts 
-Map<String, Integer> countMap = new HashMap<>(); 
-// Count occurrences 
-for (String token : tokens) { 
-token = token.toLowerCase(); // normalize 
-countMap.put(token, countMap.getOrDefault(token, 0) + 1); 
-} 
-// Print the results 
-System.out.println("\nOccurrences of each word/number:"); 
-for (Map.Entry<String, Integer> entry : countMap.entrySet()) { 
-System.out.println(entry.getKey() + " : " + entry.getValue()); 
-} 
-sc.close(); 
-} 
-} 
+	fmt.Printf("Searching for %q in %s...\n", searchQuery, searchDir)
 
-5a.Processing a List with Sort and Comparator 
-Code: 
-import java.util.ArrayList; 
-import java.lang.reflect.Field; 
-public class Practical_5a { 
-    public static void main(String[] args) throws Exception { 
-        ArrayList<Integer> list = new ArrayList<>(11); // initial capacity is 11 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        list.add(1); 
-        Field elementDataField = 
-ArrayList.class.getDeclaredField("elementData"); 
-        elementDataField.setAccessible(true); 
-        Object[] elementData = (Object[]) elementDataField.get(list); 
-        System.out.println("ArrayList capacity: " + elementData.length); 
-        list.add(1); // add one more element, capacity should increase 
-        elementData = (Object[]) elementDataField.get(list); 
-        System.out.println("ArrayList capacity: " + elementData.length); 
-    } 
-} 
+	err := filepath.WalkDir(searchDir,
+		func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
 
-5b.check ArrayList size,whether shrinks automatically even 
-after removing elements from the array. 
-Code: 
-import java.util.ArrayList; 
-import java.lang.reflect.Field; 
-public class Practical_5b { 
-public static void main(String[] args) throws Exception{ 
-ArrayList<Integer> list = new ArrayList<>(11); // array size is 11 
-list.add(1); // You can write for loop,but to make u understand the 
-…how Arraylist size works 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-list.add(1); 
-Field field = ArrayList.class.getDeclaredField("elementData"); 
-field.setAccessible(true); 
-Object[] elementData = (Object[]) field.get(list); 
-System.out.println("ArrayList capacity: " + elementData.length); 
-list.add(1); 
-elementData = (Object[]) field.get(list); 
-System.out.println("ArrayList capacity: " + elementData.length); 
-list.remove(2); //one time removed , the size was same..so try to remove 
-more elements 
-list.remove(2); 
-list.remove(2); 
-list.remove(2); 
-list.remove(2); 
-list.remove(2); 
-list.remove(2);
-list.remove(2);// size was not reduced, we can trim the size 
-elementData = (Object[]) field.get(list); 
-System.out.println("ArrayList capacity: " + elementData.length); 
-list.trimToSize(); // It reduce the size,to save the internal memory 
-elementData = (Object[]) field.get(list); 
-System.out.println("ArrayList capacity: " + elementData.length); 
-} 
-} 
+			if d.IsDir() {
+				return nil
+			}
 
-5c.Sort the Integer and String element in ascending and 
-descending order by using Lambda expression. 
-Code: 
-import java.util.Arrays; 
-import java.util.Collections; 
-import java.util.Comparator; 
-public class Practical_5c { 
-public static void main(String[] args) { 
-// Integer array 
-Integer[] intArray = {7, 4, 9, 3}; 
-// String array 
-String[] strArray = {"Sita", "Ram", "Laxman"}; 
-// Sorting integers in ascending order using lambda 
-Arrays.sort(intArray, (a, b) -> a - b); 
-System.out.println("Integers Ascending: " + Arrays.toString(intArray)); 
-// Sorting integers in descending order using lambda 
-Arrays.sort(intArray, (a, b) -> b - a); 
-System.out.println("Integers Descending: " + Arrays.toString(intArray)); 
-// Sorting strings in ascending order using lambda 
-Arrays.sort(strArray, (a, b) -> a.compareTo(b)); 
-System.out.println("Strings Ascending: " + Arrays.toString(strArray)); 
+			found, err := searchInFile(path, searchQuery)
 
-Arrays.sort(strArray, (a, b) -> b.compareTo(a)); 
-System.out.println("Strings Descending: " + Arrays.toString(strArray));
-} 
-} 
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error reading %s: %v\n", path, err)
+				return nil
+			}
 
-5d.Sorting collection with a Comparator. 
-Code: 
-import java.util.*; 
-class Student { 
-private String name; 
-private double gpa; 
-public Student(String name, double gpa) { 
-this.name = name; 
-this.gpa = gpa; 
-} 
-public String getName() { 
-return name; 
-} 
-public double getGpa() { 
-return gpa; 
-} 
-} 
-public class Practical_5d { 
-public static void main(String[] args) { 
-List<Student> students = new ArrayList<>(); 
-students.add(new Student("Charlie", 3.5)); 
-students.add(new Student("Bob", 3.7)); 
-students.add(new Student("Alice", 3.5)); 
-students.add(new Student("Akshit", 3.9)); 
-Comparator<Student> comparator = Comparator 
-.comparingDouble(Student::getGpa).reversed() 
-.thenComparing(Student::getName); 
-Collections.sort(students, comparator); 
-for (Student s : students) { 
-System.out.println(s.getName() + ": " + s.getGpa()); 
-} 
-} 
-} 
+			if found {
+				fmt.Println(path)
+			}
 
+			return nil
+		})
 
-6a)Convert all strings to uppercase. 
-Code: 
-import java.util.*; 
-import java.util.stream.Collectors; 
-public class Practical_6a { 
-public static void main(String[] args) { 
-List<String> words = Arrays.asList("apple", "banana", "apricot", "grape", 
-"avocado", "mango"); 
-// Convert to uppercase 
-List<String> upperCaseWords = words.stream() 
-.map(String::toUpperCase) 
-.collect(Collectors.toList()); 
-System.out.println("Original List: " + words); 
-System.out.println("Uppercase List: " + upperCaseWords); 
-} 
-} 
-
-6b)Filter out strings that start with a specific letter. 
-Code: 
-import java.util.*; 
-import java.util.stream.Collectors; 
-public class Practical_6b { 
-public static void main(String[] args) { 
-List<String> words = Arrays.asList("APPLE", "BANANA", "APRICOT", 
-"GRAPE", "AVOCADO", "MANGO"); 
-char filterLetter = 'A'; 
-// Filter out strings starting with 'A' 
-List<String> filteredWords = words.stream() 
-.filter(word -> !word.startsWith(String.valueOf(filterLetter))) 
-.collect(Collectors.toList()); 
-System.out.println("Original List: " + words); 
-System.out.println("Filtered List (not starting with '" + filterLetter + "'): " 
-+ filteredWords); 
-} 
-} 
-
-6c)Sort the remaining strings. 
-Code: 
-import java.util.*; 
-import java.util.stream.Collectors; 
-public class Practical_6c { 
-public static void main(String[] args) { 
-List<String> words = Arrays.asList("BANANA", "GRAPE", "MANGO"); 
-// Sort alphabetically 
-List<String> sortedWords = words.stream() 
-.sorted() 
-.collect(Collectors.toList()); 
-System.out.println("Original List: " + words); 
-System.out.println("Sorted List: " + sortedWords); 
-} 
+	if err != nil {
+		fmt.Printf("Error walking the path: %v\n", err)
+	}
 }
 
-6d)Collect the result into a new list. 
-Code: 
-import java.util.*; 
-import java.util.stream.Collectors; 
-public class Practical_6d { 
-public static void main(String[] args) { 
-List<String> words = Arrays.asList("BANANA", "GRAPE", "MANGO"); 
-// Collect into a new list 
-List<String> finalList = words.stream() 
-.collect(Collectors.toList()); 
-System.out.println("Original List: " + words); 
-System.out.println("Final Collected List: " + finalList); 
-} 
-} 
 
-Combination of Practical 6: 
-Code: 
-import java.util.*; 
-import java.util.stream.Collectors; 
- 
-public class Practical_6 { 
-    public static void main(String[] args) { 
-        // Step 0: Sample list of strings 
-        List<String> words = Arrays.asList("apple", "banana", "apricot", "grape", 
-"avocado", "mango"); 
- 
-        // Step 1: Convert all strings to uppercase (6a) 
-        List<String> upperCaseWords = words.stream() 
-                .map(String::toUpperCase) 
-                .collect(Collectors.toList()); 
-        System.out.println("Step 6a - Uppercase: " + upperCaseWords); 
- 
-        // Step 2: Filter out strings starting with a specific letter (6b) 
-        char filterLetter = 'A'; 
-        List<String> filteredWords = upperCaseWords.stream() 
-                .filter(word -> !word.startsWith(String.valueOf(filterLetter))) 
-                .collect(Collectors.toList()); 
-        System.out.println("Step 6b - Filtered: " + filteredWords); 
- 
-        // Step 3: Sort the remaining strings alphabetically (6c) 
-        List<String> sortedWords = filteredWords.stream() 
-                .sorted() 
-                .collect(Collectors.toList()); 
-        System.out.println("Step 6c - Sorted: " + sortedWords); 
- 
-        // Step 4: Collect the result into a new list (6d) 
-        List<String> finalList = new ArrayList<>(sortedWords); 
-        System.out.println("Step 6d - Final Collected List: " + finalList); 
-    } 
-} 
-
-7a.Write a program to check the pattern whether it matches the string 
-Code: 
-import java.util.regex.Matcher; 
-import java.util.regex.Pattern; 
-public class Practical_7a { 
-public static void main(String[] args) { 
-//String regex = "a"; 
-Pattern pattern = Pattern.compile("a"); 
-Matcher matcher = pattern.matcher("a"); 
-boolean matches = matcher.matches(); 
-System.out.println("result : "+matcher); 
-System.out.printf("result : "+matches); 
-Pattern pattern1 = Pattern.compile("a*b*"); 
-Matcher matcher1 = pattern1.matcher("aab"); 
-boolean matches1 = matcher1.matches(); 
-System.out.println("result1 : "+matcher1); 
-System.out.printf("result1 : "+matches1); 
-} 
-} 
-
-7b.Create RE that accept alphanumeric characters only 
-Code: 
-import java.util.Scanner; 
-public class Practical_7b { 
-public static void main(String[] args) { 
-Scanner sc = new Scanner(System.in); 
-System.out.print("Enter a string to check if it contains only 
-alphanumeric characters: "); 
-String input = sc.nextLine();  
-boolean isAlphanumeric = input.matches("^[a-zA-Z0-9]+$"); 
-System.out.println("Is alphanumeric? " + isAlphanumeric); 
-sc.close(); 
-} 
-} 
-
-7c.Create RE that accept 10 digits numbers only. 
-Code: 
-import java.util.Scanner; 
-public class Practical_7c { 
-public static void main(String[] args) { 
-Scanner sc = new Scanner(System.in); 
-System.out.print("Enter a number to check if it is a 10-digit number: "); 
-String input = sc.nextLine(); 
-boolean is10Digit = input.matches("^[0-9]{10}$"); 
-System.out.println("Is a valid 10-digit number? " + is10Digit); 
-sc.close(); 
-} 
-} 
-
-7d.Write a RE to match email address 
-Code: 
-import java.util.Scanner; 
-public class Practical_7d { 
-public static void main(String[] args) { 
-Scanner sc = new Scanner(System.in); 
-System.out.print("Enter an email address to validate: "); 
-String input = sc.nextLine(); 
-String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA
-Z]{2,6}$"; 
-boolean isValidEmail = input.matches(emailRegex); 
-System.out.println("Is a valid email? " + isValidEmail); 
-sc.close(); 
-} 
-} 
-
-8a.Create a simple JavaBean with few properties and appropriate getter 
-and setter methods. 
-Code: 
-Person.java 
-public class Person { 
-    private String name; 
-    private int age; 
-    private String city; 
- 
-    public Person() {} 
- 
-    // Getter and Setter for name 
-    public String getName() { 
-        return name; 
-    } 
-    public void setName(String name) { 
-        this.name = name; 
-    } 
- 
-    // Getter and Setter for age 
-    public int getAge() { 
-        return age; 
-    } 
-    public void setAge(int age) { 
-        this.age = age; 
-    } 
- 
-    // Getter and Setter for city 
-    public String getCity() { 
-        return city; 
-    } 
-    public void setCity(String city) { 
-        this.city = city; 
-    } 
-} 
- 
-Practical_8.java 
-public class Practical_8 { 
-    public static void main(String[] args) { 
-        Person person = new Person();
-         person.setName("Urvashi Patel"); 
-        person.setAge(20); 
-        person.setCity("Mumbai"); 
- 
-        System.out.println("Name: " + person.getName()); 
-        System.out.println("Age: " + person.getAge()); 
-        System.out.println("City: " + person.getCity()); 
-    } 
-} 
-
-9a)  import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-public class StreamIntermediateOperationsExample {
-    public static void main(String[] args) {
-
-        List<List<String>> listOfLists = Arrays.asList(
-                Arrays.asList("Reflection", "Collection", "Stream"),
-                Arrays.asList("Structure", "State", "Flow"),
-                Arrays.asList("Sorting", "Mapping", "Reduction", "Stream")
-        );
-
-
-        Set<String> intermediateResults = new HashSet<>();
-
-
-        List<String> result = listOfLists.stream()
-                .flatMap(List::stream)
-                .filter(s -> s.startsWith("S"))
-                .map(String::toUpperCase)
-                .distinct()
-                .sorted()
-                .peek(s -> intermediateResults.add(s))
-                .collect(Collectors.toList());
-
-
-        System.out.println("Intermediate Results:");
-        intermediateResults.forEach(System.out::println);
-
-
-        System.out.println("Final Result:");
-        result.forEach(System.out::println);
-    }
+10.A) Choose one or more of the functions you implemented in the previous exercises (e.g., the string reversal function, the calculator functions, or the palindrome checker) and write a comprehensive set of unit tests for it using the testing package. 
+Code :
+package main
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+func main() {
+	var filePath string
+	fmt.Print("Enter the path to the text file: ")
+	fmt.Scanln(&filePath)
+	file, err := os.Open(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			fmt.Printf("Error: File not found at '%s'\n", filePath)
+		} else {
+			fmt.Printf("Error opening file: %v\n", err)
+		}
+		return
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	fmt.Println("\nFile Content")
+	fmt.Println("*************")
+	for scanner.Scan() {
+		fmt.Println(scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("Error reading file: %v\n", err)
+	}
+	fmt.Println("*************")
 }
 
-9b)  import java.util.*;
-import java.util.stream.Collectors;
-​
-public class StreamTerminalOperationsExample {
-    public static void main(String[] args) {
-        // Sample data
-        List<String> names = Arrays.asList( "Reflection", "Collection", "Stream",
-            "Structure", "Sorting", "State"  );
-​
-        // forEach: Print each name
-        System.out.println("forEach:");
-        names.stream().forEach(System.out::println);
-​
-        // collect: Collect names starting with 'S' into a list
-        List<String> sNames = names.stream()
-                                   .filter(name -> name.startsWith("S"))
-                                   .collect(Collectors.toList());
-        System.out.println("\ncollect (names starting with 'S'):");
-        sNames.forEach(System.out::println);
-​
-        // reduce: Concatenate all names into a single string
-        String concatenatedNames = names.stream().reduce(
-            "",
-            (partialString, element) -> partialString + " " + element
-        );
-        System.out.println("\nreduce (concatenated names):");
-        System.out.println(concatenatedNames.trim());
-​
-        // count: Count the number of names
-        long count = names.stream().count();
-        System.out.println("\ncount:");
-        System.out.println(count);
-​
-        // findFirst: Find the first name
-        Optional<String> firstName = names.stream().findFirst();
-        System.out.println("\nfindFirst:");
-        firstName.ifPresent(System.out::println);
-​
-        // allMatch: Check if all names start with 'S'
-        boolean allStartWithS = names.stream().allMatch(
-            name -> name.startsWith("S")
-        );
-        System.out.println("\nallMatch (all start with 'S'):");
-        System.out.println(allStartWithS);
-​
-        // anyMatch: Check if any name starts with 'S'
-        boolean anyStartWithS = names.stream().anyMatch(
-            name -> name.startsWith("S")
-        );
-        System.out.println("\nanyMatch (any start with 'S'):");
-        System.out.println(anyStartWithS);
-    }
+. Save the code
+
+Create a folder:
+
+D:\tyit31\Pract10A
+
+Create a file:
+
+main.go
+
+Put your code inside it.
+
+Also remove the backslashes before *. These:
+
+\*\*\*\*\*\*\*\*\*\*\*\*\*
+
+should be:
+
+*************************
+2. Create a text file
+
+In the same folder, create:
+
+manthan.txt
+
+Put some text inside, for example:
+
+Hello Krishna
+This is a Go file reading practical.
+Go programming is interesting.
+
+Your folder should be:
+
+D:\tyit31\Pract10A
+│
+├── main.go
+└── manthan.txt
+3. Open CMD
+
+Run:
+
+cd /d D:\tyit31\Pract10A
+
+Then:
+
+go mod init pract10a
+4. Run the program
+go run main.go
+
+It will ask:
+
+Enter the path to the text file:
+
+Type:
+
+manthan.txt
+5. Expected output
+Enter the path to the text file: manthan.txt
+
+File Content
+*************************
+Hello Krishna
+This is a Go file reading practical.
+Go programming is interesting.
+*************************
+But for Question 10.A
+
+The question specifically asks for unit tests using the testing package. So if this is really your 10.A practical, this main.go is likely the wrong code for that question.
+
+For the palindrome version I gave you earlier, you should instead have:
+
+palindrome.go
+palindrome_test.go
+go.mod
+
+and run:
+
+go test -v
+
+--------------------------------------------------------------------------------------------------------------------------
+palindrom.go
+package main
+
+func isPalindrome(s string) bool {
+	for i := 0; i < len(s)/2; i++ {
+		if s[i] != s[len(s)-1-i] {
+			return false
+		}
+	}
+
+	return true
 }
+
+
+palindrome_test.go
+
+
+package main
+
+
+import "testing"
+
+func TestIsPalindrome(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"madam", true},
+		{"racecar", true},
+		{"hello", false},
+		{"level", true},
+		{"world", false},
+		{"", true},
+	}
+
+	for _, test := range tests {
+		result := isPalindrome(test.input)
+
+		if result != test.expected {
+			t.Errorf(
+				"isPalindrome(%q) = %v, expected %v",
+				test.input,
+				result,
+				test.expected,
+			)
+		}
+	}
+}
+
+step to run 10 Code
+
+go mod init pract10a
+go test
