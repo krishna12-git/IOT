@@ -1,4 +1,5 @@
-  4   Routing and Navigation with $routeProvider 
+  444444444444444444444444444444444444444444444444444444444444444444444444444444444
+   Routing and Navigation with $routeProvider 
 1. Create a single-page application (SPA) with multiple views. Implement navigation 
 using $routeProvider to navigate between these views. Each view should display 
 different content. 
@@ -107,6 +108,7 @@ app.run(function($rootScope, $location) {
 
 });
 
+55555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555555
 
 Practical No:-05 
 Service for Data Sharing and Logic Encapsulation 
@@ -206,6 +208,7 @@ app.controller("SecondController", function ($scope, DataService) {
 
 });
 
+ 6666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 PRACTICAL NO. 06 
 Implementing a Simple Search Functionality 
 Q. Create an application that displays a list of items. Add a search input field 
@@ -261,6 +264,7 @@ app.controller("MainController", function ($scope) {
 
 });
 
+ 888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 PRACTICAL NO: 08 
 Creating a Reusable Modal Dialog 
 Q. Develop a reusable modal dialog component using a custom directive or 
@@ -399,7 +403,7 @@ app.controller("OtherCtrl", ($scope, ModalService) =>
     $scope.openModal = (t, c) =>
         ModalService.show(t, c, ["Yes", "No"])
 );
-
+ 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999
 PRACTICAL NO: 09 
 Implementing a Drag-and-Drop Interface: 
 Q. Build an application that allows users to drag and drop elements within a list 
